@@ -6,6 +6,19 @@ import "github.com/gin-gonic/gin"
 type UserHandler struct {
 }
 
+func (u *UserHandler) registerUserRoutes(server *gin.Engine) {
+
+	ug := server.Group("/users")
+
+	ug.POST("/signup", u.SignUp)
+
+	ug.POST("/login", u.Login)
+
+	ug.POST("/edit", u.Edit)
+
+	ug.GET("/profile", u.Profile)
+}
+
 // SignUp user sign up
 func (u *UserHandler) SignUp(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{"message": "this is sign up function"})
