@@ -1,6 +1,10 @@
 package web
 
-import "github.com/gin-gonic/gin"
+import (
+	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-gonic/gin"
+	"net/http"
+)
 
 // UserHandler Define user related routes
 type UserHandler struct {
@@ -21,7 +25,51 @@ func (u *UserHandler) registerUserRoutes(server *gin.Engine) {
 
 // SignUp user sign up
 func (u *UserHandler) SignUp(ctx *gin.Context) {
-	ctx.JSON(200, gin.H{"message": "this is sign up function"})
+	type SignUpReq struct {
+		Email           string `json:"email"`
+		ConfirmPassword string `json:"confirmPassword"`
+		Password        string `json:"password"`
+	}
+	var req SignUpReq
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	// Regular expression check email and password
+	const (
+		emailRegexPattern    = `\A([\w+\-].?)+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z`
+		passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$`
+	)
+	emailExp := regexp.MustCompile(emailRegexPattern, regexp.None)
+	ok, err := emailExp.MatchString(req.Email)
+	if err != nil {
+		ctx.String(http.StatusOK, "system error")
+		return
+	}
+
+	if !ok {
+		ctx.String(http.StatusOK, "email regexp error")
+		return
+	}
+
+	if req.ConfirmPassword != req.Password {
+		ctx.String(http.StatusOK, "twice input password not equal")
+		return
+	}
+
+	passwordExp := regexp.MustCompile(passwordRegexPattern, regexp.None)
+	ok, err = passwordExp.MatchString(req.Password)
+	if err != nil {
+		ctx.String(http.StatusOK, "system error")
+		return
+	}
+
+	if !ok {
+		ctx.String(http.StatusOK, "password's length must be big 8 and contain letter and digit")
+		return
+	}
+
+	ctx.String(http.StatusOK, "sign up %v\n", req)
 }
 
 // Login user login
