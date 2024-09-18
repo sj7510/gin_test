@@ -8,6 +8,15 @@ import (
 
 // UserHandler Define user related routes
 type UserHandler struct {
+	emailExp    *regexp.Regexp
+	passwordExp *regexp.Regexp
+}
+
+func NewUserHandler() *UserHandler {
+	return &UserHandler{
+		emailExp:    regexp.MustCompile(`\A([\w+\-].?)+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z`, regexp.None),
+		passwordExp: regexp.MustCompile(`^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$`, regexp.None),
+	}
 }
 
 func (u *UserHandler) registerUserRoutes(server *gin.Engine) {
@@ -35,13 +44,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	// Regular expression check email and password
-	const (
-		emailRegexPattern    = `\A([\w+\-].?)+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z`
-		passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$`
-	)
-	emailExp := regexp.MustCompile(emailRegexPattern, regexp.None)
-	ok, err := emailExp.MatchString(req.Email)
+	ok, err := u.emailExp.MatchString(req.Email)
 	if err != nil {
 		ctx.String(http.StatusOK, "system error")
 		return
@@ -57,8 +60,7 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	passwordExp := regexp.MustCompile(passwordRegexPattern, regexp.None)
-	ok, err = passwordExp.MatchString(req.Password)
+	ok, err = u.passwordExp.MatchString(req.Password)
 	if err != nil {
 		ctx.String(http.StatusOK, "system error")
 		return
