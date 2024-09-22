@@ -1,6 +1,8 @@
 package web
 
 import (
+	"gin_test/webook/internal/domain"
+	"gin_test/webook/internal/service"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -8,18 +10,20 @@ import (
 
 // UserHandler Define user related routes
 type UserHandler struct {
+	svc         *service.UserService
 	emailExp    *regexp.Regexp
 	passwordExp *regexp.Regexp
 }
 
-func NewUserHandler() *UserHandler {
+func NewUserHandler(svc *service.UserService) *UserHandler {
 	return &UserHandler{
+		svc:         svc,
 		emailExp:    regexp.MustCompile(`\A([\w+\-].?)+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z`, regexp.None),
 		passwordExp: regexp.MustCompile(`^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$`, regexp.None),
 	}
 }
 
-func (u *UserHandler) registerUserRoutes(server *gin.Engine) {
+func (u *UserHandler) RegisterUserRoutes(server *gin.Engine) {
 
 	ug := server.Group("/users")
 
@@ -68,6 +72,16 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 
 	if !ok {
 		ctx.String(http.StatusOK, "password's length must be big 8 and contain letter and digit")
+		return
+	}
+
+	err = u.svc.SignUp(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+
+	if err != nil {
+		ctx.String(http.StatusOK, "system error")
 		return
 	}
 

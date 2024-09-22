@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func RegisterRouters() *gin.Engine {
+func InitServer() *gin.Engine {
 	server := gin.Default()
 
 	server.Use(cors.New(cors.Config{
@@ -24,9 +24,6 @@ func RegisterRouters() *gin.Engine {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
-
-	u := NewUserHandler()
-	u.registerUserRoutes(server)
 
 	return server
 
