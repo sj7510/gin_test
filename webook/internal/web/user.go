@@ -95,7 +95,25 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 
 // Login user login
 func (u *UserHandler) Login(ctx *gin.Context) {
-	ctx.HTML(200, "user_login.html", nil)
+	type LoginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req LoginReq
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	err := u.svc.Login(ctx, req.Email, req.Password)
+	if err == service.ErrInvalidUserOrPassword {
+		ctx.String(http.StatusOK, "email or password error")
+		return
+	}
+	if err != nil {
+		ctx.String(http.StatusOK, "system error")
+		return
+	}
+	ctx.String(200, "login success")
+	return
 }
 
 // Edit user info

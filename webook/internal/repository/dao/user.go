@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+var ErrUserDuplicateEmail = errors.New("email is used")
+var ErrUserNotFound = gorm.ErrRecordNotFound
+
 type UserDAO struct {
 	db *gorm.DB
 }
@@ -18,7 +21,11 @@ func NewUserDAO(db *gorm.DB) *UserDAO {
 	}
 }
 
-var ErrUserDuplicateEmail = errors.New("email is used")
+func (dao *UserDAO) FindByEmail(ctx context.Context, email string) (User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
+	return u, err
+}
 
 func (dao *UserDAO) Insert(ctx context.Context, u User) error {
 	now := time.Now().UnixMilli()
