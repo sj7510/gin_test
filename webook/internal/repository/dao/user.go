@@ -2,6 +2,8 @@ package dao
 
 import (
 	"context"
+	"errors"
+	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 	"time"
 )
@@ -16,10 +18,20 @@ func NewUserDAO(db *gorm.DB) *UserDAO {
 	}
 }
 
+var ErrUserDuplicateEmail = errors.New("email is used")
+
 func (dao *UserDAO) Insert(ctx context.Context, u User) error {
 	now := time.Now().UnixMilli()
 	u.Ctime = now
 	u.Utime = now
+	err := dao.db.WithContext(ctx).Create(&u).Error
+	if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+		const uniqueViolationErr uint16 = 1062
+		if mysqlErr.Number == uniqueViolationErr {
+			// email is used
+			return ErrUserDuplicateEmail
+		}
+	}
 	return dao.db.Create(&u).Error
 }
 

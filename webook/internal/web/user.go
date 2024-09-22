@@ -80,6 +80,11 @@ func (u *UserHandler) SignUp(ctx *gin.Context) {
 		Password: req.Password,
 	})
 
+	if err == service.ErrUserDuplicateEmail {
+		ctx.String(http.StatusOK, "email is used")
+		return
+	}
+
 	if err != nil {
 		ctx.String(http.StatusOK, "system error")
 		return
