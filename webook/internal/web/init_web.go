@@ -1,6 +1,9 @@
 package web
 
 import (
+	"gin_test/webook/internal/web/middlewire"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/contrib/cors"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -24,6 +27,10 @@ func InitServer() *gin.Engine {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
+
+	store := cookie.NewStore([]byte("secret"))
+	server.Use(sessions.Sessions("mysession", store))
+	server.Use(middlewire.NewLoginMiddlewareBuilder().Build())
 
 	return server
 

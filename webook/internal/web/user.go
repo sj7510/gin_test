@@ -4,6 +4,7 @@ import (
 	"gin_test/webook/internal/domain"
 	"gin_test/webook/internal/service"
 	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -103,11 +104,20 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	err := u.svc.Login(ctx, req.Email, req.Password)
+	user, err := u.svc.Login(ctx, req.Email, req.Password)
 	if err == service.ErrInvalidUserOrPassword {
 		ctx.String(http.StatusOK, "email or password error")
 		return
 	}
+	if err != nil {
+		ctx.String(http.StatusOK, "system error")
+		return
+	}
+
+	// Write cookie upon successful login
+	sess := sessions.Default(ctx)
+	sess.Set("userId", user.Id)
+	err = sess.Save()
 	if err != nil {
 		ctx.String(http.StatusOK, "system error")
 		return
