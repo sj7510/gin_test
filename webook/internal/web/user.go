@@ -117,6 +117,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	// Write cookie upon successful login
 	sess := sessions.Default(ctx)
 	sess.Set("userId", user.Id)
+	sess.Options(sessions.Options{MaxAge: 30 * 60})
 	err = sess.Save()
 	if err != nil {
 		ctx.String(http.StatusOK, "system error")
@@ -124,6 +125,17 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	}
 	ctx.String(200, "login success")
 	return
+}
+
+func (u *UserHandler) Logout(ctx *gin.Context) {
+	sess := sessions.Default(ctx)
+	sess.Options(sessions.Options{MaxAge: -1})
+	err := sess.Save()
+	if err != nil {
+		ctx.String(http.StatusOK, "system error")
+		return
+	}
+	ctx.String(200, "logout success")
 }
 
 // Edit user info
