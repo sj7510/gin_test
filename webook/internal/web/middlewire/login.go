@@ -1,6 +1,7 @@
 package middlewire
 
 import (
+	"encoding/gob"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -16,18 +17,22 @@ func NewLoginMiddlewareBuilder() *LoginMiddlewareBuilder {
 
 func (l *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		gob.Register(time.Now())
 		// Don't need validate
 		if ctx.Request.URL.Path == "/users/login" ||
 			ctx.Request.URL.Path == "/users/signup" {
 			return
 		}
 		sess := sessions.Default(ctx)
-		if sess.Get("userId") == nil {
+		id := sess.Get("userId")
+		if id == nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
 		updateTime := sess.Get("update_time")
+		sess.Set("userId", id)
+		sess.Options(sessions.Options{MaxAge: 60})
 		now := time.Now().UnixMilli()
 
 		// first login
