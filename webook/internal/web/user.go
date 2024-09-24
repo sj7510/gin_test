@@ -105,7 +105,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	_, err := u.svc.Login(ctx, req.Email, req.Password)
+	user, err := u.svc.Login(ctx, req.Email, req.Password)
 	if err == service.ErrInvalidUserOrPassword {
 		ctx.String(http.StatusOK, "email or password error")
 		return
@@ -116,7 +116,11 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	}
 
 	// Jwt
-	token := jwt.New(jwt.SigningMethodHS256)
+	claims := UserClaims{
+		Uid: user.Id,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 
 	tokenStr, err := token.SignedString([]byte("secret"))
 
@@ -147,5 +151,22 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 
 // Profile get user profile
 func (u *UserHandler) Profile(ctx *gin.Context) {
-	ctx.JSON(200, gin.H{"message": "this is profile function"})
+	claims, exists := ctx.Get("claims")
+
+	if !exists {
+		ctx.String(http.StatusOK, "system error")
+		return
+	}
+
+	claimsValue, ok := claims.(*UserClaims)
+	if !ok {
+		ctx.String(http.StatusOK, "system error")
+		return
+	}
+	ctx.JSON(200, gin.H{"uid": claimsValue.Uid})
+}
+
+type UserClaims struct {
+	jwt.StandardClaims
+	Uid int64
 }

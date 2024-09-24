@@ -2,6 +2,7 @@ package middlewire
 
 import (
 	"encoding/gob"
+	"gin_test/webook/internal/web"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"net/http"
@@ -30,16 +31,15 @@ func (l *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 		}
 
-		token, err := jwt.Parse(authCode, func(token *jwt.Token) (interface{}, error) {
+		claims := &web.UserClaims{}
+		token, err := jwt.ParseWithClaims(authCode, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte("secret"), nil
 		})
-		if err != nil {
+		if err != nil || !token.Valid {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		if !token.Valid {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
+
+		ctx.Set("claims", claims)
 	}
 }
