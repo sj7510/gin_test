@@ -6,6 +6,7 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"net/http"
 )
 
@@ -104,7 +105,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	user, err := u.svc.Login(ctx, req.Email, req.Password)
+	_, err := u.svc.Login(ctx, req.Email, req.Password)
 	if err == service.ErrInvalidUserOrPassword {
 		ctx.String(http.StatusOK, "email or password error")
 		return
@@ -114,15 +115,16 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	// Write cookie upon successful login
-	sess := sessions.Default(ctx)
-	sess.Set("userId", user.Id)
-	sess.Options(sessions.Options{MaxAge: 30 * 60})
-	err = sess.Save()
+	// Jwt
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	tokenStr, err := token.SignedString([]byte("secret"))
+
 	if err != nil {
 		ctx.String(http.StatusOK, "system error")
 		return
 	}
+	ctx.Header("x-jwt-token", tokenStr)
 	ctx.String(200, "login success")
 	return
 }

@@ -2,8 +2,8 @@ package middlewire
 
 import (
 	"encoding/gob"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"net/http"
 	"time"
 )
@@ -23,32 +23,22 @@ func (l *LoginMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.Request.URL.Path == "/users/signup" {
 			return
 		}
-		sess := sessions.Default(ctx)
-		id := sess.Get("userId")
-		if id == nil {
+
+		authCode := ctx.GetHeader("Authorization")
+
+		if authCode == "" {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+		}
+
+		token, err := jwt.Parse(authCode, func(token *jwt.Token) (interface{}, error) {
+			return []byte("secret"), nil
+		})
+		if err != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-
-		updateTime := sess.Get("update_time")
-		sess.Set("userId", id)
-		sess.Options(sessions.Options{MaxAge: 60})
-		now := time.Now().UnixMilli()
-
-		// first login
-		if updateTime == nil {
-			sess.Set("update_time", now)
-			_ = sess.Save()
-			return
-		}
-
-		updateTimeVal, _ := updateTime.(int64)
-
-		// 1 minutes
-		if now-updateTimeVal > 60*1000 {
-			// refresh session
-			sess.Set("update_time", now)
-			_ = sess.Save()
+		if !token.Valid {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 	}

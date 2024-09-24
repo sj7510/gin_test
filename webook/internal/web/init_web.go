@@ -17,6 +17,7 @@ func InitServer() *gin.Engine {
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowCredentials: true,
+		ExposedHeaders:   []string{"x-jwt-token"},
 		AllowOriginFunc: func(origin string) bool {
 			if strings.HasPrefix(origin, "http://localhost") {
 				// dev mode
