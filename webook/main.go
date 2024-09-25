@@ -6,10 +6,12 @@ import (
 	"gin_test/webook/internal/service"
 	"gin_test/webook/internal/web"
 	"gin_test/webook/internal/web/middlewire"
+	"gin_test/webook/pkg/ginx/middleware/ratelimit"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
@@ -47,6 +49,15 @@ func initDB() *gorm.DB {
 
 func initServer() *gin.Engine {
 	server := gin.Default()
+
+	// Implementing current limiting through Redis
+	cmd := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       1,
+	})
+	// 1 minute, 100 requests
+	server.Use(ratelimit.NewBuilder(cmd, 1*time.Minute, 100).Build())
 
 	server.Use(cors.New(cors.Config{
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
