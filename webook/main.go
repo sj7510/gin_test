@@ -19,11 +19,15 @@ import (
 )
 
 func main() {
-	db := initDB()
-	u := initUser(db)
-	server := initServer()
-	u.RegisterUserRoutes(server)
+	// db := initDB()
+	// u := initUser(db)
+	// server := initServer()
+	// u.RegisterUserRoutes(server)
 
+	server := gin.Default()
+	server.GET("/ping", func(ctx *gin.Context) {
+		ctx.String(200, "pong")
+	})
 	_ = server.Run(":8080")
 }
 
