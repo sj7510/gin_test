@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gin_test/webook/config"
 	"gin_test/webook/internal/repository"
 	"gin_test/webook/internal/repository/dao"
 	"gin_test/webook/internal/service"
@@ -19,15 +20,11 @@ import (
 )
 
 func main() {
-	// db := initDB()
-	// u := initUser(db)
-	// server := initServer()
-	// u.RegisterUserRoutes(server)
+	db := initDB()
+	u := initUser(db)
+	server := initServer()
+	u.RegisterUserRoutes(server)
 
-	server := gin.Default()
-	server.GET("/ping", func(ctx *gin.Context) {
-		ctx.String(200, "pong")
-	})
 	_ = server.Run(":8080")
 }
 
@@ -40,7 +37,7 @@ func initUser(db *gorm.DB) *web.UserHandler {
 }
 
 func initDB() *gorm.DB {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +53,7 @@ func initServer() *gin.Engine {
 
 	// Implementing current limiting through Redis
 	cmd := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     config.Config.Redis.Addr,
 		Password: "",
 		DB:       1,
 	})
